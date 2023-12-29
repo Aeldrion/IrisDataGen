@@ -5,19 +5,37 @@ import java.io.File;
 import java.nio.file.Files;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Arrays;
 import java.lang.reflect.Field;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 
 import net.minecraft.data.Main;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.EmptyBlockGetter;
 
+import net.minecraft.world.entity.EntityType;
+
 public class Extract {
+    /**
+     * Debug flag.
+     */
+    public static boolean debug_flag = false;
+    /**
+     * Minecraft version to extract from.
+     */
+    public static String mc_version = "";
+    /**
+     * Init a PrintStream that will be overriden by Minecraft's logger
+     */
+    public static PrintStream out = System.out;
+
     /**
      * Simple method writing a JSON object to a file.
      * @param json_obj JSON to write.
@@ -64,9 +82,13 @@ public class Extract {
                     block.add("states", blockStates);
                 }
 
-                // Get the true block name from its description ID
-                String[] split_block_name = b.getDescriptionId().toString().split("[.]");// Regex split
-                blocks.add("minecraft:"+split_block_name[split_block_name.length-1], block);
+                {// Get the true block name from its description ID
+                    String[] split_block_name = b.getDescriptionId().toString().split("[.]");// Regex split
+                    String block_name = "minecraft:"+split_block_name[split_block_name.length-1];
+                    blocks.add(block_name, block);
+                    if (debug_flag)
+                        out.println("> "+block_name);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -76,11 +98,58 @@ public class Extract {
     }
 
     /**
+     * Method to call if you want to extract all entities dimensions.
+     * @return JsonObject containing entities dimensions.
+     */
+    public static JsonObject extract_entities_dimensions() {
+        // Create an empty JSON object that will hold everything
+        JsonObject entities = new JsonObject();
+
+        Class<?> entity_type_class = EntityType.class;
+        // For each EntityType from the Blocks class
+        for (Field entity_type_field : entity_type_class.getDeclaredFields()) {
+            entity_type_field.setAccessible(true);
+            if (!EntityType.class.isAssignableFrom(entity_type_field.getType())) {
+                continue;
+            }
+            // Get the EntityType object from the class field
+            try {
+                EntityType et = (EntityType)entity_type_field.get(null);
+                JsonObject entity = new JsonObject();
+
+                {// Get the Entity's dimensions
+                    entity.add("width", new JsonPrimitive(et.getWidth()));
+                    entity.add("height", new JsonPrimitive(et.getHeight()));
+                }
+
+                {// Get the true block name from its description ID
+                    String[] split_entity_name = et.getDescriptionId().toString().split("[.]");// Regex split
+                    String entity_name = "minecraft:"+split_entity_name[split_entity_name.length-1];
+                    entities.add(entity_name, entity);
+                    if (debug_flag)
+                        out.println("> "+entity_name);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return entities;
+    }
+
+    /**
      * Main method.
      * @param args Should contain the Minecraft version we are extracting from.
      */
     public static void main(String[] args) {
-        PrintStream out = System.out;// Init a PrintStream that will be overriden by Minecraft's logger
+        // Parse arguments
+        for (String arg : args) {
+            // Check for a debug flag
+            if (arg.equals("--debug"))
+                debug_flag = true;
+            else
+                mc_version = arg;
+        }
 
         // Initialize Minecraft Registries and everything needed
         try {
@@ -92,7 +161,9 @@ public class Extract {
         }
 
         // Write the JSON Object to a file
-        write_json(extract_blocks_shapes(), "../../"+args[0] + "_blocks.json");
-        out.println("[+] Successfully exported the blocks hitboxes in " + args[0]+"_blocks.json");
+        write_json(extract_blocks_shapes(), "../../"+ mc_version + "_blocks.json");
+        out.println("[+] Successfully exported the blocks hitboxes in " + mc_version +"_blocks.json");
+        write_json(extract_entities_dimensions(), "../../"+ mc_version + "_entities.json");
+        out.println("[+] Successfully exported the entities dimensions in " + mc_version +"_entities.json");
     }
 }
