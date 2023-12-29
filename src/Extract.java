@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.File;
 import java.nio.file.Files;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
 import java.lang.reflect.Field;
@@ -18,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.EmptyBlockGetter;
 
 import net.minecraft.world.entity.EntityType;
@@ -75,6 +77,24 @@ public class Extract {
                     JsonArray blockStates = new JsonArray();
                     for (BlockState bs : b.getStateDefinition().getPossibleStates()) {
                         JsonObject state = new JsonObject();
+
+                        // Block properties
+                        {
+                            JsonObject properties = new JsonObject();
+                            for (Map.Entry<Property<?>, Comparable<?>> entry : bs.getValues().entrySet()) {
+                                Class<?> valClass = entry.getKey().getValueClass();
+                                if (valClass.equals(Integer.class)) {
+                                    properties.addProperty(entry.getKey().getName(), (Integer) entry.getValue());
+                                } else if (valClass.equals(Boolean.class)) {
+                                    properties.addProperty(entry.getKey().getName(), (Boolean) entry.getValue());
+                                } else {
+                                    properties.addProperty(entry.getKey().getName(), String.valueOf(entry.getValue()));
+                                }
+                            }
+                            state.add("properties", properties);
+                        }
+
+                        // Block shape
                         state.addProperty("shape",
                                 bs.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs().toString());
                         blockStates.add(state);
