@@ -1,0 +1,3 @@
+https://github.com/LXGaming/Reconstruct/releases/download/v1.3.25/reconstruct-cli-1.3.25.jar
+https://repo1.maven.org/maven2/org/benf/cfr/0.152/cfr-0.152.jar
+https://github.com/Vineflower/vineflower/releases/download/1.9.3/vineflower-1.9.3.jar

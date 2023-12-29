@@ -1,0 +1,6 @@
+*_downloaded/
+decompiler.log
+dependencies/
+javac.*
+build/
+*_blocks.json
