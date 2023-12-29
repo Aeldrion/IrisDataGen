@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Arrays;
 import java.lang.reflect.Field;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonPrimitive;
 
@@ -45,13 +48,29 @@ public class Extract {
      */
     public static void write_json(JsonObject json_obj, String filename) {
         try {
-            FileWriter myWriter = new FileWriter(filename);
-            myWriter.write(json_obj.toString());
-            myWriter.close();
+            FileWriter writer = new FileWriter(filename);
+            Gson gson = (debug_flag ? new GsonBuilder().setPrettyPrinting() : new GsonBuilder()).disableHtmlEscaping().create();
+            gson.toJson(json_obj, writer);
+            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Method to call if you want to sort a JSON object alphabetically.
+     * @param json_obj JSON object to sort.
+     * @return Sorted JSON object.
+     */
+    public static JsonObject sort_json(JsonObject json_obj) {
+        JsonObject sorted = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : json_obj.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+            sorted.add(entry.getKey(), entry.getValue());
+        }
+        return sorted;
+    }
+
+
 
     /**
      * Method to call if you want to extract all blocks shapes from the Minecraft client.
@@ -78,8 +97,7 @@ public class Extract {
                     for (BlockState bs : b.getStateDefinition().getPossibleStates()) {
                         JsonObject state = new JsonObject();
 
-                        // Block properties
-                        {
+                        {// Block properties
                             JsonObject properties = new JsonObject();
                             for (Map.Entry<Property<?>, Comparable<?>> entry : bs.getValues().entrySet()) {
                                 Class<?> valClass = entry.getKey().getValueClass();
@@ -102,9 +120,8 @@ public class Extract {
                     block.add("states", blockStates);
                 }
 
-                {// Get the true block name from its description ID
-                    String[] split_block_name = b.getDescriptionId().toString().split("[.]");// Regex split
-                    String block_name = "minecraft:"+split_block_name[split_block_name.length-1];
+                {// Get the true block name
+                    String block_name = b.toString().substring(6, b.toString().length()-1);
                     blocks.add(block_name, block);
                     if (debug_flag)
                         out.println("> "+block_name);
@@ -181,9 +198,9 @@ public class Extract {
         }
 
         // Write the JSON Object to a file
-        write_json(extract_blocks_shapes(), "../../"+ mc_version + "_blocks.json");
+        write_json(sort_json(extract_blocks_shapes()), "../../"+ mc_version + "_blocks.json");
         out.println("[+] Successfully exported the blocks hitboxes in " + mc_version +"_blocks.json");
-        write_json(extract_entities_dimensions(), "../../"+ mc_version + "_entities.json");
+        write_json(sort_json(extract_entities_dimensions()), "../../"+ mc_version + "_entities.json");
         out.println("[+] Successfully exported the entities dimensions in " + mc_version +"_entities.json");
     }
 }
