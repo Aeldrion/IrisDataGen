@@ -42,10 +42,11 @@ if %version%=="" (
 
 :: Download the requested jar
 echo "[+] Downloading official obfuscated jar client archive and mappings"
-mkdir %version%_downloaded
-mkdir build\%version%
-if exist %version%_downloaded\client.jar goto :jar_dl_else
-if exist %version%_downloaded\client.txt goto :jar_dl_else
+mkdir downloaded 
+mkdir downloaded/%version%
+mkdir build/%version%
+if exist downloaded/%version%/client.jar goto :jar_dl_else
+if exist downloaded/%version%\client.txt goto :jar_dl_else
 python3 download_mc_jar.py %version%
 goto :jar_dl_end
 :jar_dl_else
@@ -67,7 +68,7 @@ echo "[+] Deobfuscating the jar archive for version %version%"
 if exist build\%version%\client_%version%_deobf.jar goto :deobf_else
 cd dependencies
 :: Reconstruct ProGuard Deobfuscator
-java -Xmx2G -cp ".;*" -jar reconstruct-cli-1.3.25.jar -jar ..\%version%_downloaded\client.jar -mapping ..\%version%_downloaded\client.txt -output ..\build\%version%\client_%version%_deobf.jar -agree
+java -Xmx2G -cp ".;*" -jar reconstruct-cli-1.3.25.jar -jar ..\downloaded\%version%\client.jar -mapping ..\downloaded\%version%\client.txt -output ..\build\%version%\client_%version%_deobf.jar -agree
 cd ..
 goto :deobf_end
 :deobf_else

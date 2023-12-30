@@ -28,29 +28,21 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.entity.EntityType;
 
 public class Extract {
-    /**
-     * Debug flag.
-     */
-    public static boolean debug_flag = false;
-    /**
-     * Minecraft version to extract from.
-     */
-    public static String mc_version = "";
-    /**
-     * Init a PrintStream that will be overriden by Minecraft's logger
-     */
-    public static PrintStream out = System.out;
+    public static boolean debug = false;
+    public static boolean prettyPrinting = false;
+    public static String gameVersion = "";
+    public static PrintStream out = System.out; // Init a PrintStream that will be overriden by Minecraft's logger
 
     /**
-     * Simple method writing a JSON object to a file.
-     * @param json_obj JSON to write.
-     * @param filename Filename of the File to write into.
+     * Writes a JsonObject to a file
+     * @param jsonObject JSON object to write
+     * @param filename Filename of the File to write into
      */
-    public static void write_json(JsonObject json_obj, String filename) {
+    public static void writeJsonFile(JsonObject jsonObject, String filename, boolean prettyPrinting) {
         try {
             FileWriter writer = new FileWriter(filename);
-            Gson gson = (debug_flag ? new GsonBuilder().setPrettyPrinting() : new GsonBuilder()).disableHtmlEscaping().create();
-            gson.toJson(json_obj, writer);
+            Gson gson = (prettyPrinting ? new GsonBuilder().setPrettyPrinting() : new GsonBuilder()).disableHtmlEscaping().create();
+            gson.toJson(jsonObject, writer);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,134 +50,127 @@ public class Extract {
     }
 
     /**
-     * Method to call if you want to sort a JSON object alphabetically.
-     * @param json_obj JSON object to sort.
-     * @return Sorted JSON object.
+     * Sorts the keys of a JSON object alphabetically
+     * @param jsonObject JSON object to sort
+     * @return Sorted JSON object
      */
-    public static JsonObject sort_json(JsonObject json_obj) {
-        JsonObject sorted = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : json_obj.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
-            sorted.add(entry.getKey(), entry.getValue());
+    public static JsonObject sortJsonKeys(JsonObject jsonObject) {
+        JsonObject sortedJsonObject = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry: jsonObject.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+            sortedJsonObject.add(entry.getKey(), entry.getValue());
         }
-        return sorted;
+        return sortedJsonObject;
     }
-
-
-
+    
     /**
-     * Method to call if you want to extract all blocks shapes from the Minecraft client.
-     * @return JsonObject containing block shapes.
+     * Extracts all block shapes from the Minecraft client
+     * @return JsonObject containing block shapes for every block state
      */
-    public static JsonObject extract_blocks_shapes() {
-        // Create an empty JSON object that will hold everything
-        JsonObject blocks = new JsonObject();
+    public static JsonObject extractBlockShapes() {
+        JsonObject blocksJsonObject = new JsonObject();
 
-        Class<?> blocks_class = Blocks.class;
+        Class<?> blocksClass = Blocks.class;
         // For each block from the Blocks class
-        for (Field blocks_field : blocks_class.getDeclaredFields()) {
-            blocks_field.setAccessible(true);
-            if (!Block.class.isAssignableFrom(blocks_field.getType())) {
+        for (Field blocksField : blocksClass.getDeclaredFields()) {
+            blocksField.setAccessible(true);
+            if (!Block.class.isAssignableFrom(blocksField.getType()))
                 continue;
-            }
+            
             // Get the block object from the class field
             try {
-                Block b = (Block)blocks_field.get(null);
-                JsonObject block = new JsonObject();
+                Block block = (Block)blocksField.get(null);
+                JsonObject blockJsonObject = new JsonObject();
 
-                {// Get shape for each state of the object
+                {
+                    // Get shape for each state of the object
                     JsonArray blockStates = new JsonArray();
-                    for (BlockState bs : b.getStateDefinition().getPossibleStates()) {
-                        JsonObject state = new JsonObject();
+                    for (BlockState blockState : block.getStateDefinition().getPossibleStates()) {
+                        JsonObject blockStateJsonObject = new JsonObject();
 
-                        {// Block properties
+                        {
+                            // Block properties
                             JsonObject properties = new JsonObject();
-                            for (Map.Entry<Property<?>, Comparable<?>> entry : bs.getValues().entrySet()) {
-                                Class<?> valClass = entry.getKey().getValueClass();
-                                if (valClass.equals(Integer.class)) {
-                                    properties.addProperty(entry.getKey().getName(), (Integer) entry.getValue());
-                                } else if (valClass.equals(Boolean.class)) {
-                                    properties.addProperty(entry.getKey().getName(), (Boolean) entry.getValue());
-                                } else {
-                                    properties.addProperty(entry.getKey().getName(), String.valueOf(entry.getValue()));
-                                }
-                            }
-                            state.add("properties", properties);
+                            for (Map.Entry<Property<?>, Comparable<?>> entry : blockState.getValues().entrySet())
+                                properties.addProperty(entry.getKey().getName(), String.valueOf(entry.getValue()));
+                            blockStateJsonObject.add("properties", properties);
                         }
 
                         // Block shape
-                        state.addProperty("shape",
-                                bs.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs().toString());
-                        blockStates.add(state);
+                        blockStateJsonObject.addProperty("shape", blockState.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs().toString());
+                        blockStates.add(blockStateJsonObject);
                     }
-                    block.add("states", blockStates);
+                    blockJsonObject.add("states", blockStates);
                 }
 
-                {// Get the true block name
-                    String block_name = b.toString().substring(6, b.toString().length()-1);
-                    blocks.add(block_name, block);
-                    if (debug_flag)
-                        out.println("> "+block_name);
+                {
+                    // Get the true block name, e.g. air instead of Block{air}
+                    String blockName = block.toString().substring(6, block.toString().length()-1);
+                    blocksJsonObject.add(blockName, blockJsonObject);
+                    if (debug)
+                        out.println("> "+blockName);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        return blocks;
+        return blocksJsonObject;
     }
 
     /**
      * Method to call if you want to extract all entities dimensions.
      * @return JsonObject containing entities dimensions.
      */
-    public static JsonObject extract_entities_dimensions() {
-        // Create an empty JSON object that will hold everything
-        JsonObject entities = new JsonObject();
+    public static JsonObject extractEntityDimensions() {
+        JsonObject entitiesJsonObject = new JsonObject();
 
-        Class<?> entity_type_class = EntityType.class;
-        // For each EntityType from the Blocks class
-        for (Field entity_type_field : entity_type_class.getDeclaredFields()) {
-            entity_type_field.setAccessible(true);
-            if (!EntityType.class.isAssignableFrom(entity_type_field.getType())) {
+        Class<?> entityTypeClass = EntityType.class;
+        for (Field entityTypeField: entityTypeClass.getDeclaredFields()) {
+            entityTypeField.setAccessible(true);
+            if (!EntityType.class.isAssignableFrom(entityTypeField.getType()))
                 continue;
-            }
+            
             // Get the EntityType object from the class field
             try {
-                EntityType et = (EntityType)entity_type_field.get(null);
-                JsonObject entity = new JsonObject();
+                EntityType entityType = (EntityType)entityTypeField.get(null);
+                JsonObject entityJsonObject = new JsonObject();
 
-                {// Get the Entity's dimensions
-                    entity.add("width", new JsonPrimitive(et.getWidth()));
-                    entity.add("height", new JsonPrimitive(et.getHeight()));
+                {
+                    // Get the Entity's dimensions
+                    entityJsonObject.add("width", new JsonPrimitive(entityType.getWidth()));
+                    entityJsonObject.add("height", new JsonPrimitive(entityType.getHeight()));
                 }
 
-                {// Get the true block name from its description ID
-                    String[] split_entity_name = et.getDescriptionId().toString().split("[.]");// Regex split
-                    String entity_name = "minecraft:"+split_entity_name[split_entity_name.length-1];
-                    entities.add(entity_name, entity);
-                    if (debug_flag)
-                        out.println("> "+entity_name);
+                {
+                    // Get the true block name from its description ID
+                    String[] splitEntityName = entityType.getDescriptionId().toString().split("[.]");
+                    String entityName = "minecraft:"+splitEntityName[splitEntityName.length-1];
+                    entitiesJsonObject.add(entityName, entityJsonObject);
+                    if (debug)
+                        out.println("> "+entityName);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        return entities;
+        return entitiesJsonObject;
     }
 
     /**
-     * Main method.
-     * @param args Should contain the Minecraft version we are extracting from.
+     * Main method
+     * @param args The Minecraft version we are extracting from
      */
     public static void main(String[] args) {
         // Parse arguments
-        for (String arg : args) {
-            // Check for a debug flag
+        for (String arg: args) {
+            // Check for debug flag
             if (arg.equals("--debug"))
-                debug_flag = true;
+                debug = true;
+            else if (arg.equals("--pretty"))
+                prettyPrinting = true;
             else
-                mc_version = arg;
+                gameVersion = arg;
         }
 
         // Initialize Minecraft Registries and everything needed
@@ -198,9 +183,9 @@ public class Extract {
         }
 
         // Write the JSON Object to a file
-        write_json(sort_json(extract_blocks_shapes()), "../../"+ mc_version + "_blocks.json");
-        out.println("[+] Successfully exported the blocks hitboxes in " + mc_version +"_blocks.json");
-        write_json(sort_json(extract_entities_dimensions()), "../../"+ mc_version + "_entities.json");
-        out.println("[+] Successfully exported the entities dimensions in " + mc_version +"_entities.json");
+        writeJsonFile(sortJsonKeys(extractBlockShapes()), "../../generated/"+ gameVersion + "_blocks.json", prettyPrinting);
+        out.println("[+] Successfully exported block hitboxes in " + gameVersion +"_blocks.json");
+        writeJsonFile(sortJsonKeys(extractEntityDimensions()), "../../generated/"+ gameVersion + "_entities.json", prettyPrinting);
+        out.println("[+] Successfully exported entity dimensions in " + gameVersion +"_entities.json");
     }
 }

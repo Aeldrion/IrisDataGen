@@ -15,7 +15,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-# Check the given argument
+# Validate argument
 if [ "$version" = "" ]; then
     echo "[-] Missing Minecraft version argument, usage: ./extract.sh <version number>"
     exit 1
@@ -23,9 +23,10 @@ fi
 
 # Download the requested jar
 echo "[+] Downloading official obfuscated jar client archive and mappings"
-mkdir -pv "$version"_downloaded
+mkdir -pv downloaded
+mkdir -pv downloaded/"$version"
 mkdir -pv build/"$version"
-if [ ! -f "$version"_downloaded/client.jar ] || [ ! -f "$version"_downloaded/client.txt ]; then
+if [ ! -f downloaded/"$version"/client.jar ] || [ ! -f downloaded/"$version"/client.txt ]; then
     python3 download_mc_jar.py "$version"
 else
     echo "[~] Files already exist, skipping"
@@ -41,7 +42,7 @@ echo "[+] Deobfuscating the jar archive for version $version"
 if [ ! -f build/"$version"/client_"$version"_deobf.jar ]; then
     cd dependencies
     # Reconstruct ProGuard Deobfuscator
-    java -Xmx2G -cp ".:*" -jar reconstruct-cli-1.3.25.jar -jar ../"$version"_downloaded/client.jar -mapping ../"$version"_downloaded/client.txt \
+    java -Xmx2G -cp ".:*" -jar reconstruct-cli-1.3.25.jar -jar ../downloaded/"$version"/client.jar -mapping ../downloaded/"$version"/client.txt \
         -output ../build/"$version"/client_"$version"_deobf.jar -agree # -exclude <Excluded Packages>
     cd ..
 else
@@ -73,10 +74,11 @@ fi
 
 # Extract
 echo "[+] Compiling the extractor"
+mkdir generated
 javac -classpath "build/$version/*" \
     -sourcepath . -d "build/$version" src/Extract.java
 echo "[+] Running the extractor"
 cd "build/$version"
 java -Xmx2G -classpath ".:*" \
-    src.Extract "$version"
+    src.Extract "$version" --pretty
 cd ../..

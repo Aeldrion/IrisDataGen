@@ -1,8 +1,7 @@
-*_downloaded/
+downloaded
+generated
+build
+dependencies
 *_sources/
 decompiler.log
-dependencies/
 javac.*
-build/
-*_blocks.json
-*_entities.json
