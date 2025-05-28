@@ -18,28 +18,28 @@ A version-independent data generator for [Iris](https://github.com/Aeldrion/Iris
 
 ### Windows
 
-Install [Java 17 JDK](https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.exe), [Python3](https://www.python.org/downloads/windows/) (or from the Windows Store) and the Python [requests](https://requests.readthedocs.io/en/latest/user/install/#install) module from the websites given in the README.
+Install [Java 21 JDK](https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe), [Python3](https://www.python.org/downloads/windows/) (or from the Windows Store) and the Python [requests](https://requests.readthedocs.io/en/latest/user/install/#install) module from the websites given in the README.
 
-Update your PATH for Java and Python3 if it has not already been done before.
+Update your PATH for Java and Python 3 if it has not already been done before.
 
 ### Linux
 
 #### Debian/Ubuntu
 
 ```
-sudo apt install openjdk-17-jdk python3-requests wget
+sudo apt install openjdk-21-jdk python3-requests wget
 ```
 
 #### Fedora
 
 ```
-sudo dnf install java-17-openjdk-devel python3-requests wget
+sudo dnf install java-21-openjdk-devel python3-requests wget
 ```
 
 #### Archlinux
 
 ```
-sudo pacman -S jdk17-openjdk python-requests wget
+sudo pacman -S jdk21-openjdk python-requests wget
 ```
 
 ### OSX
