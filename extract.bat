@@ -97,6 +97,7 @@ echo "[~] Decompiling disabled"
 echo "[+] Compiling the extractor"
 javac -classpath "build\%version%\*" -sourcepath . -d "build\%version%" src\Extract.java
 echo "[+] Running the extractor"
+mkdir generated
 cd build\%version%
 java -Xmx2G -classpath ".;*" src.Extract %version%
 cd ../..
