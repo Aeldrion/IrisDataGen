@@ -43,8 +43,8 @@ if %version%=="" (
 :: Download the requested jar
 echo "[+] Downloading official obfuscated jar client archive and mappings"
 mkdir downloaded 
-mkdir downloaded/%version%
-mkdir build/%version%
+mkdir downloaded\%version%
+mkdir build\%version%
 if exist downloaded/%version%/client.jar goto :jar_dl_else
 if exist downloaded/%version%\client.txt goto :jar_dl_else
 python3 download_mc_jar.py %version%
