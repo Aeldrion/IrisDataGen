@@ -11,6 +11,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonArray;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.Main;
 import net.minecraft.world.entity.EntityType;
@@ -73,10 +74,9 @@ public class Extract {
     public static JsonObject getAllBlockShapes() {
         JsonObject blocksJsonObject = new JsonObject();
         int numBlocks = 0;
-        for (Block block : BuiltInRegistries.BLOCK) {
+        for (Holder<Block> blockHolder : BuiltInRegistries.BLOCK.asHolderIdMap()) {
             numBlocks++;
-            String blockName = block.toString().substring(6, block.toString().length() - 1);
-            blocksJsonObject.add(blockName, getBlockShapes(block));
+            blocksJsonObject.add(blockHolder.getRegisteredName(), getBlockShapes(blockHolder.value()));
         }
 
         System.out.println("Found " + String.valueOf(numBlocks) + " blocks");
@@ -105,11 +105,9 @@ public class Extract {
     public static JsonObject getAllEntityDimensions() {
         JsonObject entitiesJsonObject = new JsonObject();
         int numEntityTypes = 0;
-        for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
+        for (Holder<EntityType<?>> entityTypeHolder : BuiltInRegistries.ENTITY_TYPE.asHolderIdMap()) {
             numEntityTypes++;
-            String[] splitEntityName = entityType.getDescriptionId().toString().split("[.]");
-            String entityTypeName = "minecraft:" + splitEntityName[splitEntityName.length - 1];
-            entitiesJsonObject.add(entityTypeName, getEntityDimensions(entityType));
+            entitiesJsonObject.add(entityTypeHolder.getRegisteredName(), getEntityDimensions(entityTypeHolder.value()));
         }
 
         System.out.println("Found " + String.valueOf(numEntityTypes) + " entity types");
