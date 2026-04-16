@@ -1,73 +1,34 @@
 # IrisDataGen
 
-A version-independent data generator for [Iris](https://github.com/Aeldrion/Iris). Downloads Minecraft jar files and extracts block shapes and entity dimensions into JSON files.
+A data generator extracting block shapes and entity dimensions into JSON files for [Iris](https://github.com/Aeldrion/Iris) using data from the Minecraft client.
 
-## Dependencies
+## Requirements
 
-**Not automatically installed**:
-- python3 (requests)
-- wget (Linux only)
-- java and javac (JDK)
-
-**Automatically installed**:
-- [Reconstruct](https://github.com/LXGaming/Reconstruct) ProGuard deobfuscator
-- [CFR](https://github.com/leibnitz27/cfr) Java decompiler
-- [Vineflower](https://github.com/Vineflower/vineflower) Java decompiler
-
-## Installing
-
-### Windows
-
-Install [Java 21 JDK](https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe), [Python3](https://www.python.org/downloads/windows/) (or from the Windows Store) and the Python [requests](https://requests.readthedocs.io/en/latest/user/install/#install) module from the websites given in the README.
-
-Update your PATH for Java and Python 3 if it has not already been done before.
-
-### Linux
-
-#### Debian/Ubuntu
-
-```
-sudo apt install openjdk-21-jdk python3-requests wget
-```
-
-#### Fedora
-
-```
-sudo dnf install java-21-openjdk-devel python3-requests wget
-```
-
-#### Archlinux
-
-```
-sudo pacman -S jdk21-openjdk python-requests wget
-```
-
-### OSX
-
-**NOT TESTED**
-
-Install the JDK for Java, `wget` and Python3 and the module `requests` using `brew` or something else.
-
+- JDK 25
+- A working Minecraft directory containing a jar for the target version client (you have this if you have already played this version)
 
 ## Usage
 
-To extract data for a given Minecraft version, run `./extract.sh <version number>`, e.g.
+To extract data for a given Minecraft version, run `./gradlew run -PmcVersion=<version name>`, e.g.
 ```sh
-./extract.sh 1.20.4
+./gradlew run          # Defaults to 26.1
+./gradlew run -PmcVersion=26.1
+./gradlew run -PmcVersion=26.2-snapshot-3
 ```
 or on Windows:
 ```batch
-extract.bat 1.20.4
+gradlew.bat run -PmcVersion=26.2-snapshot-3
 ```
 
-To clean everything up, run `./clean.sh`
-
-For example:
+If you need to specify another Minecraft directory, you can use the `-PmcDir` option:
+```sh
+./gradlew run -PmcDir=/home/ael/Games/Minecraft
 ```
-./clean.sh
-./extract 1.20.4
+```batch
+gradlew.bat run -PmcDir=C:\Users\Ael\Local\Roaming\.minecraft
 ```
 
-### Options
+Two JSON files, `blocks.json` and `entities.json`, are generated in `app/generated`.
 
-- `--decompile [cfr|vineflower]`: enable decompilation of the deobfuscated Minecraft jar file, optionally add a specific decompiler (default is CFR)
+> [!WARNING]
+> IrisDataGen only functions on the unobfuscated Minecraft client and as such is incompatible with versions prior to 26.1-snapshot-1. IrisDataGen also depends on methods from the Minecraft jar, which may be changed in any snapshot.

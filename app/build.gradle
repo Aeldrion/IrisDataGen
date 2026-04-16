@@ -1,0 +1,33 @@
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Include Minecraft client jar
+    def mcDir = project.findProperty("mcDir") ?: System.getProperty("user.home") + "/.minecraft"
+    def mcVersion = project.findProperty("mcVersion") ?: "26.1"
+    implementation files("${mcDir}/versions/${mcVersion}/${mcVersion}.jar")
+
+    // Read library paths in (version).json and include the corresponding libraries
+    def versionFile = file("$mcDir/versions/${mcVersion}/${mcVersion}.json")
+    def versionData = new JsonSlurper().parseText(versionFile.text)
+    for (library in versionData.libraries) {
+        implementation files("${mcDir}/libraries/${library.downloads.artifact.path}")
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+application {
+    mainClass = 'com.ael.Extract'
+}

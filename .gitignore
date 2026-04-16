@@ -1,7 +1,6 @@
-downloaded
-generated
+.gradle
 build
-dependencies
-*_sources/
-decompiler.log
-javac.*
+generated
+logs
+.kotlin
+*.class
